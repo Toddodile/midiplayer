@@ -1,7 +1,11 @@
 #include <QApplication>
 
+#include "midiplayer.hpp"
+
 int main(int argc, char *argv[])
 {
-  // TODO
-  return 0;
+  QApplication app(argc, argv);
+  MIDIPlayer player;
+  player.show();
+  return app.exec();
 }

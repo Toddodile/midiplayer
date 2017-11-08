@@ -77,7 +77,7 @@ private slots:
   void handleNotify() {
 
     int bytesFree = audio->bytesFree();
-    int bytesToWrite = bytesFree > buffer_size ? buffer_size : bytesFree;
+    int bytesToWrite = (int) (bytesFree > buffer_size ? buffer_size : bytesFree);
     int samplesToWrite = bytesToWrite >> 1;
     bytesToWrite = 2 * samplesToWrite;
 
