@@ -8,6 +8,8 @@
 #include <QLabel>
 #include <QDebug>
 
+#include <QAudioDeviceInfo>
+
 MIDIPlayer::MIDIPlayer(QWidget * parent) : QWidget(parent)
 {
 	auto layout = new QVBoxLayout;
