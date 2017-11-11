@@ -6,6 +6,7 @@
 #include <QGroupBox>
 #include <QSlider>
 #include <QLabel>
+#include <QDebug>
 
 MIDIPlayer::MIDIPlayer(QWidget * parent) : QWidget(parent)
 {
@@ -13,8 +14,13 @@ MIDIPlayer::MIDIPlayer(QWidget * parent) : QWidget(parent)
 	layout->addWidget(makeMidiParams());
 	layout->addWidget(makePlayParams());
 	setLayout(layout);
-	//TODO make connections
+
 	connect(midiBtn, SIGNAL(clicked()), this, SLOT(midiFileBrowse()));
+	connect(volumeSld, SIGNAL(valueChanged(int)), this, SLOT(onVolChange(int)));
+	connect(playBtn, SIGNAL(clicked()), this, SLOT(onPlay()));
+	connect(pauseBtn, SIGNAL(clicked()), this, SLOT(onPause()));
+	connect(stopBtn, SIGNAL(clicked()), this, SLOT(onStop()));
+	connect(muteBtn, SIGNAL(clicked()), this, SLOT(onMute()));
 }
 
 void MIDIPlayer::midiFileBrowse()
@@ -60,6 +66,8 @@ QGroupBox* MIDIPlayer::makePlayParams()
 	volumeSld = new QSlider(Qt::Horizontal);
 	volumeSld->setObjectName("volume");
 	volumeSld->setRange(0, 100);
+	volumeSld->setSliderPosition(50);
+	volumeSld->setTracking(false);
 
 	muteBtn = new QPushButton("Mute");
 	muteBtn->setObjectName("mute");
@@ -73,4 +81,34 @@ QGroupBox* MIDIPlayer::makePlayParams()
 
 	midiParams->setLayout(layout);
 	return midiParams;
+}
+
+void MIDIPlayer::onPlay()
+{
+	qDebug() << "Hit play";
+	//TODO implement
+}
+
+void MIDIPlayer::onPause()
+{
+	qDebug() << "Hit pause";
+	//TODO implement
+}
+
+void MIDIPlayer::onStop()
+{
+	qDebug() << "Hit stop";
+	//TODO implement
+}
+
+void MIDIPlayer::onMute()
+{
+	qDebug() << "Hit mute";
+	//TODO implement
+}
+
+void MIDIPlayer::onVolChange(int volume)
+{
+	qDebug() << volume;
+	//TODO implement
 }

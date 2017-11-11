@@ -19,6 +19,16 @@ private slots:
 
 	void midiFileBrowse();
 
+	void onPlay();
+
+	void onPause();
+
+	void onStop();
+
+	void onMute();
+
+	void onVolChange(int volume);
+
 private:
 
 	QLineEdit * midiPath;
