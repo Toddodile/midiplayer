@@ -25,9 +25,12 @@ MIDIPlayer::MIDIPlayer(QWidget * parent) : QWidget(parent)
 	connect(pauseBtn, SIGNAL(clicked()), this, SLOT(onPause()));
 	connect(stopBtn, SIGNAL(clicked()), this, SLOT(onStop()));
 	connect(muteBtn, SIGNAL(clicked()), this, SLOT(onMute()));
+	//connect(this, SIGNAL(destroyed()), this, SLOT(onClose()));
+	processor = std::thread(&MIDIPlayer::processFiles, this);
+}
 
-	std::thread processor(&processFiles);
-
+MIDIPlayer::~MIDIPlayer()
+{
 	processor.join();
 }
 
