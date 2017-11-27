@@ -45,5 +45,7 @@ private:
 
 	QGroupBox* makePlayParams();
 
+	void processFiles();
+
 };
 #endif

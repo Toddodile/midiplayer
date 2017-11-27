@@ -6,9 +6,11 @@
 #include <QGroupBox>
 #include <QSlider>
 #include <QLabel>
+#include <QMessageBox>
 #include <QDebug>
-
 #include <QAudioDeviceInfo>
+
+#include <thread>
 
 MIDIPlayer::MIDIPlayer(QWidget * parent) : QWidget(parent)
 {
@@ -23,6 +25,10 @@ MIDIPlayer::MIDIPlayer(QWidget * parent) : QWidget(parent)
 	connect(pauseBtn, SIGNAL(clicked()), this, SLOT(onPause()));
 	connect(stopBtn, SIGNAL(clicked()), this, SLOT(onStop()));
 	connect(muteBtn, SIGNAL(clicked()), this, SLOT(onMute()));
+
+	std::thread processor(&processFiles);
+
+	processor.join();
 }
 
 void MIDIPlayer::midiFileBrowse()
@@ -87,6 +93,13 @@ QGroupBox* MIDIPlayer::makePlayParams()
 
 void MIDIPlayer::onPlay()
 {
+	if (midiPath->text().isEmpty())
+	{
+		QMessageBox error;
+		error.setObjectName("noinput");
+		error.critical(this, "Error", "Must select a MIDI file");
+		return;
+	}
 	qDebug() << "Hit play";
 	//TODO implement
 }
@@ -113,4 +126,10 @@ void MIDIPlayer::onVolChange(int volume)
 {
 	qDebug() << volume;
 	//TODO implement
+}
+
+void MIDIPlayer::processFiles()
+{
+	//TODO implement
+	return;
 }
