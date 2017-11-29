@@ -5,7 +5,9 @@ project(M3 CXX)
 set(SOURCE_FILES
         message_queue.hpp message_queue.cpp
         shared_double_buffer.hpp shared_double_buffer.cpp
-        midiplayer.hpp midiplayer.cpp)
+        midiplayer.hpp midiplayer.cpp
+	track.hpp track.cpp
+	event.hpp event.cpp)
 
 # try to prevent accidental in-source builds, these cause lots of problems
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
