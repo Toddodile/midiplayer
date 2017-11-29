@@ -6,6 +6,7 @@
 #include <QGroupBox>
 #include <QPushButton>
 #include <QSlider>
+#include <QAudioOutput>
 
 #include <thread>
 
@@ -67,6 +68,11 @@ private slots:
 	*/
 	void onVolChange(int volume);
 
+	/**
+	*
+	*/
+	void handleNotify();
+
 private:
 	bool newTrack;
 
@@ -82,6 +88,8 @@ private:
 
 	QSlider * volumeSld;
 
+	QAudioOutput *audio;
+
 	/**
 	* Creates a QGroupBox containing the MIDI parameters
 	*/
@@ -96,5 +104,7 @@ private:
 	* The file processing function that processes the signal
 	*/
 	void processFiles();
+
+	enum State {STOPPED, PAUSED, PLAYING} curState;
 };
 #endif

@@ -27,6 +27,11 @@ void TestMIDIPlayer::initTestCase(){
   }
 
   {
+	auto w = widget.findChild<QPushButton *>("inputbrowse");
+	QVERIFY2(w, "Could not find a file browse button");
+  }
+
+  {
     auto w = widget.findChild<QPushButton *>("play");
     QVERIFY2(w, "Could not find play button");
   }

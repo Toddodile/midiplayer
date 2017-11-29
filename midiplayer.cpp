@@ -14,6 +14,8 @@
 
 MIDIPlayer::MIDIPlayer(QWidget * parent) : QWidget(parent)
 {
+	curState = STOPPED;
+
 	auto layout = new QVBoxLayout;
 	layout->addWidget(makeMidiParams());
 	layout->addWidget(makePlayParams());
@@ -27,6 +29,32 @@ MIDIPlayer::MIDIPlayer(QWidget * parent) : QWidget(parent)
 	connect(muteBtn, SIGNAL(clicked()), this, SLOT(onMute()));
 	//connect(this, SIGNAL(destroyed()), this, SLOT(onClose()));
 	processor = std::thread(&MIDIPlayer::processFiles, this);
+
+	QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
+	
+	auto rates = info.supportedSampleRates();
+
+	int sampleRate = rates.at(0);
+	for (int i = 1; i < rates.size(); ++i) {
+		if (rates.at(i) < sampleRate)
+			sampleRate = rates.at(i);
+	}
+
+	QAudioFormat format;
+	format.setSampleRate(sampleRate);
+	format.setChannelCount(1);
+	format.setSampleSize(16);
+	format.setCodec("audio/pcm");
+	format.setByteOrder(QAudioFormat::LittleEndian);
+	format.setSampleType(QAudioFormat::SignedInt);
+
+	if (!info.isFormatSupported(format)) {
+		qWarning()
+			<< "Raw audio format not supported by backend, cannot play audio.";
+	}
+	else {
+		audio = new QAudioOutput(format, this);
+	}
 }
 
 MIDIPlayer::~MIDIPlayer()
@@ -53,6 +81,7 @@ QGroupBox* MIDIPlayer::makeMidiParams()
 	midiPath = new QLineEdit();
 	midiPath->setObjectName("inputpath");
 	midiBtn = new QPushButton("Browse");
+	midiBtn->setObjectName("inputbrowse");
 	
 	layout->addWidget(midiPath, 0, 0);
 	layout->addWidget(midiBtn, 0, 1);
@@ -96,6 +125,10 @@ QGroupBox* MIDIPlayer::makePlayParams()
 
 void MIDIPlayer::onPlay()
 {
+	if (curState == PLAYING)
+	{
+		return;
+	}
 	if (midiPath->text().isEmpty())
 	{
 		QMessageBox error;
@@ -103,18 +136,31 @@ void MIDIPlayer::onPlay()
 		error.critical(this, "Error", "Must select a MIDI file");
 		return;
 	}
+	midiPath->setReadOnly(true);
+	curState = PLAYING;
 	qDebug() << "Hit play";
 	//TODO implement
 }
 
 void MIDIPlayer::onPause()
 {
+	if (curState != PLAYING)
+	{
+		return;
+	}
+	curState = PAUSED;
 	qDebug() << "Hit pause";
 	//TODO implement
 }
 
 void MIDIPlayer::onStop()
 {
+	if (curState == STOPPED)
+	{
+		return;
+	}
+	midiPath->setReadOnly(false);
+	curState = STOPPED;
 	qDebug() << "Hit stop";
 	//TODO implement
 }
@@ -133,6 +179,12 @@ void MIDIPlayer::onVolChange(int volume)
 
 void MIDIPlayer::processFiles()
 {
-	//TODO implement
+	//todo
+	return;
+}
+
+void MIDIPlayer::handleNotify()
+{
+	//TODO implement;
 	return;
 }

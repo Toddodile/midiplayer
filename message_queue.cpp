@@ -1,4 +1,11 @@
 #include "message_queue.hpp"
 
-// Implement your message queue here
+#include <queue>
+#include <mutex>
 
+class MessageQueue {
+public:
+	MessageQueue();
+private:
+	mutable std::mutex myMutex;
+};
