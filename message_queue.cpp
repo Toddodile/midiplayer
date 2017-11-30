@@ -9,6 +9,10 @@ MessageQueue::MessageQueue()
 Message MessageQueue::pop()
 {
 	std::lock_guard<std::mutex> lock(messageMutex);
+	if (messages.empty())
+	{
+		return Message(Message::EMPTY);
+	}
 	Message temp = messages.front();
 	messages.pop();
 	return temp;

@@ -3,9 +3,9 @@
 #include <queue>
 #include <mutex>
 
-class Message {
+struct Message {
 public:
-	enum TYPE { PLAY, PAUSE, STOP, EXIT };
+	enum TYPE { PLAY, PAUSE, STOP, EXIT, EMPTY };
 
 	Message(Track newTrack) {
 		messageType = PLAY;
@@ -32,6 +32,10 @@ public:
 		return messageType == EXIT;
 	}
 
+	bool isEmpty() {
+		return messageType == EMPTY;
+	}
+
 	Track getTrack() { 
 		return track;
 	}
@@ -44,6 +48,16 @@ private:
 class MessageQueue {
 public:
 	MessageQueue();
+
+	/**
+	* Cannot be copied
+	*/
+	MessageQueue(const MessageQueue &) = delete;
+
+	/**
+	* Cannot be assigned
+	*/
+	MessageQueue & operator=(const MessageQueue &) = delete;
 	
 	Message pop();
 

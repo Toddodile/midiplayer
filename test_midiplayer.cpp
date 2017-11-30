@@ -4,6 +4,7 @@
 #include <QLineEdit>
 
 #include "midiplayer.hpp"
+#include "message_queue.hpp"
 
 class TestMIDIPlayer : public QObject {
   Q_OBJECT
@@ -12,7 +13,7 @@ private slots:
 
   void initTestCase();
 
-  // TODO: add your tests
+  void testMessageQueue();
   
 private:
 
@@ -55,6 +56,20 @@ void TestMIDIPlayer::initTestCase(){
     auto w = widget.findChild<QPushButton *>("mute");
     QVERIFY2(w, "Could not find mute button");
   }
+}
+
+void TestMIDIPlayer::testMessageQueue() {
+	MessageQueue queue;
+	QCOMPARE(queue.isEmpty(), true);
+	queue.push(Message::Message(Message::PAUSE));
+	QCOMPARE(queue.isEmpty(), false);
+	Message temp = queue.pop();
+	QCOMPARE(temp.isPause(), true);
+	QCOMPARE(temp.isPlay(), false);
+	QCOMPARE(temp.isStop(), false);
+	QCOMPARE(temp.isExit(), false);
+	QCOMPARE(queue.isEmpty(), true);
+	QCOMPARE(queue.pop().isEmpty(), true);
 }
 
 QTEST_MAIN(TestMIDIPlayer)
