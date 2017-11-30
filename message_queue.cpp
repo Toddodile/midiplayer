@@ -1,35 +1,27 @@
 #include "message_queue.hpp"
-#include "track.hpp"
-
-#include <queue>
 #include <mutex>
 
-class Message {
-public:
-	enum TYPE { PLAY, PAUSE, STOP, EXIT };
-	Message(Track track);
+MessageQueue::MessageQueue()
+{
+	messages = std::queue<Message>();
+}
 
-	Message(TYPE message);
+Message MessageQueue::pop()
+{
+	std::lock_guard<std::mutex> lock(messageMutex);
+	Message temp = messages.front();
+	messages.pop();
+	return temp;
+}
 
-	bool isPlay();
+void MessageQueue::push(Message message)
+{
+	std::lock_guard<std::mutex> lock(messageMutex);
+	messages.emplace(message);
+}
 
-	bool isPause();
-
-	bool isStop();
-
-	bool isExit();
-
-	Track getTrack();
-};
-
-class MessageQueue {
-public:
-	MessageQueue();
-
-
-private:
-
-
-
-	mutable std::mutex myMutex;
-};
+bool MessageQueue::isEmpty()
+{
+	std::lock_guard<std::mutex> lock(messageMutex);
+	return messages.empty();
+}
