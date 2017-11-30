@@ -61,7 +61,7 @@ void TestMIDIPlayer::initTestCase(){
 void TestMIDIPlayer::testMessageQueue() {
 	MessageQueue queue;
 	QCOMPARE(queue.isEmpty(), true);
-	queue.push(Message::Message(Message::PAUSE));
+	queue.push(Message(Message::PAUSE));
 	QCOMPARE(queue.isEmpty(), false);
 	Message temp = queue.pop();
 	QCOMPARE(temp.isPause(), true);

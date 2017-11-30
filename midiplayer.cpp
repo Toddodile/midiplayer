@@ -53,7 +53,7 @@ MIDIPlayer::MIDIPlayer(QWidget * parent) : QWidget(parent)
 			<< "Raw audio format not supported by backend, cannot play audio.";
 	}
 	else {
-		audio = new QAudioOutput(format, this);
+		audio = new QAudioOutput(format);
 	}
 }
 

@@ -3,7 +3,7 @@
 #include <queue>
 #include <mutex>
 
-struct Message {
+class Message {
 public:
 	enum TYPE { PLAY, PAUSE, STOP, EXIT, EMPTY };
 
