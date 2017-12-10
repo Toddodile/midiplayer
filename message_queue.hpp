@@ -1,3 +1,5 @@
+#ifndef MESSAGE_QUEUE_HPP
+#define MESSAGE_QUEUE_HPP
 #include "track.hpp"
 
 #include <queue>
@@ -5,7 +7,7 @@
 
 class Message {
 public:
-	enum TYPE { PLAY, PAUSE, STOP, EXIT, EMPTY };
+	enum TYPE { PLAY, STOP, EXIT, EMPTY };
 
 	Message(Track newTrack) {
 		messageType = PLAY;
@@ -18,10 +20,6 @@ public:
 
 	bool isPlay() {
 		return messageType == PLAY;
-	}
-
-	bool isPause() {
-		return messageType == PAUSE;
 	}
 
 	bool isStop() {
@@ -71,3 +69,5 @@ private:
 
 	mutable std::mutex messageMutex;
 };
+
+#endif

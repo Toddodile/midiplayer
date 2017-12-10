@@ -14,7 +14,9 @@
 
 MIDIPlayer::MIDIPlayer(QWidget * parent) : QWidget(parent)
 {
-	curState = STOPPED;
+	playing = false;
+	volume = 50 * VOL_MAX;
+	newSong = true;
 
 	auto layout = new QVBoxLayout;
 	layout->addWidget(makeMidiParams());
@@ -27,7 +29,6 @@ MIDIPlayer::MIDIPlayer(QWidget * parent) : QWidget(parent)
 	connect(pauseBtn, SIGNAL(clicked()), this, SLOT(onPause()));
 	connect(stopBtn, SIGNAL(clicked()), this, SLOT(onStop()));
 	connect(muteBtn, SIGNAL(clicked()), this, SLOT(onMute()));
-	//connect(this, SIGNAL(destroyed()), this, SLOT(onClose()));
 	processor = std::thread(&MIDIPlayer::processFiles, this);
 
 	QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
@@ -125,10 +126,6 @@ QGroupBox* MIDIPlayer::makePlayParams()
 
 void MIDIPlayer::onPlay()
 {
-	if (curState == PLAYING)
-	{
-		return;
-	}
 	if (midiPath->text().isEmpty())
 	{
 		QMessageBox error;
@@ -136,39 +133,40 @@ void MIDIPlayer::onPlay()
 		error.critical(this, "Error", "Must select a MIDI file");
 		return;
 	}
+	playBtn->setEnabled(false);
 	midiPath->setReadOnly(true);
-	curState = PLAYING;
+	playing = true;
+	pauseBtn->setEnabled(true);
+	stopBtn->setEnabled(true);
+	messages.push(Message::PLAY);
 	qDebug() << "Hit play";
-	//TODO implement
+	//TODO send play message
 }
 
 void MIDIPlayer::onPause()
 {
-	if (curState != PLAYING)
-	{
-		return;
-	}
-	curState = PAUSED;
+	playing = false;
+	playBtn->setEnabled(true);
+	pauseBtn->setEnabled(false);
+	stopBtn->setEnabled(true);
 	qDebug() << "Hit pause";
-	//TODO implement
 }
 
 void MIDIPlayer::onStop()
 {
-	if (curState == STOPPED)
-	{
-		return;
-	}
+	playBtn->setEnabled(true);
+	pauseBtn->setEnabled(false);
+	stopBtn->setEnabled(false);
 	midiPath->setReadOnly(false);
-	curState = STOPPED;
 	qDebug() << "Hit stop";
-	//TODO implement
+	//TODO send reset message
 }
 
 void MIDIPlayer::onMute()
 {
+	std::lock_guard<std::mutex> lock(volMutex);
+	volume = volume == 0 ? volumeSld->sliderPosition() * VOL_MAX: 0;
 	qDebug() << "Hit mute";
-	//TODO implement
 }
 
 void MIDIPlayer::onVolChange(int volume)

@@ -7,7 +7,8 @@ set(SOURCE_FILES
         shared_double_buffer.hpp shared_double_buffer.cpp
         midiplayer.hpp midiplayer.cpp
 	track.hpp track.cpp
-	event.hpp event.cpp)
+	event.hpp event.cpp
+	midi.hpp midi.cpp)
 
 # try to prevent accidental in-source builds, these cause lots of problems
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})

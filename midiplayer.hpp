@@ -9,6 +9,10 @@
 #include <QAudioOutput>
 
 #include <thread>
+#include <mutex>
+
+#include "shared_double_buffer.hpp"
+#include "message_queue.hpp"
 
 // define class MIDIPlayer here
 class MIDIPlayer : public QWidget {
@@ -74,7 +78,13 @@ private slots:
 	void handleNotify();
 
 private:
-	bool newTrack;
+	const double VOL_MAX = 100.0;
+
+	std::mutex songMutex;
+	bool newSong;
+
+	MessageQueue messages;
+	SharedDoubleBuffer dataBuffer;
 
 	std::thread processor;
 
@@ -105,6 +115,10 @@ private:
 	*/
 	void processFiles();
 
-	enum State {STOPPED, PAUSED, PLAYING} curState;
+	std::mutex playingMutex;
+	bool playing;
+
+	std::mutex volMutex;
+	double volume;
 };
 #endif
