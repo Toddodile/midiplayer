@@ -7,7 +7,7 @@
 
 class Message {
 public:
-	enum TYPE { PLAY, STOP, EXIT, EMPTY };
+	enum TYPE { PLAY, PAUSE, STOP, EXIT, EMPTY };
 
 	Message(Track newTrack) {
 		messageType = PLAY;
@@ -20,6 +20,10 @@ public:
 
 	bool isPlay() {
 		return messageType == PLAY;
+	}
+
+	bool isPause() {
+		return messageType == PAUSE;
 	}
 
 	bool isStop() {

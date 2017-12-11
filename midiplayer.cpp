@@ -17,7 +17,6 @@
 
 MIDIPlayer::MIDIPlayer(QWidget * parent) : QWidget(parent)
 {
-	playing = false;
 	newSong = true;
 
 	auto layout = new QVBoxLayout;
@@ -60,10 +59,11 @@ MIDIPlayer::MIDIPlayer(QWidget * parent) : QWidget(parent)
 
 	connect(audio, SIGNAL(notify()), this, SLOT(handleNotify()));
 
-	bufferSize = audio->bufferSize();
-	bufferSize = bufferSize > 0 ? bufferSize : 1024;
+	bufferSize = 4096;
 
-	audio->setNotifyInterval(25);
+	audio->setNotifyInterval(10);
+	audio->setBufferSize((int)bufferSize);
+	audio->setVolume(0.5);
 	
 	device = audio->start();
 
@@ -151,11 +151,8 @@ void MIDIPlayer::onPlay()
 	}
 	playBtn->setEnabled(false);
 	midiPath->setReadOnly(true);
-	playing = true;
 	pauseBtn->setEnabled(true);
 	stopBtn->setEnabled(true);
-	std::lock_guard<std::mutex> songLock(songMutex);
-	std::lock_guard<std::mutex> playLock(playingMutex);
 	if (newSong)
 	{
 		TrackListType tracks = readMIDIFromFile(midiPath->text().toStdString());
@@ -168,18 +165,14 @@ void MIDIPlayer::onPlay()
 		}
 		messages.push(Message(tracks.front()));
 	}
-	playing = true;
-	qDebug() << "Hit play";
 }
 
 void MIDIPlayer::onPause()
 {
-	playing = false;
 	playBtn->setEnabled(true);
 	pauseBtn->setEnabled(false);
 	stopBtn->setEnabled(true);
-	std::lock_guard<std::mutex> lock(playingMutex);
-	playing = false;
+	messages.push(Message(Message::PAUSE));
 }
 
 void MIDIPlayer::onStop()
@@ -188,10 +181,7 @@ void MIDIPlayer::onStop()
 	pauseBtn->setEnabled(false);
 	stopBtn->setEnabled(false);
 	midiPath->setReadOnly(false);
-	std::lock_guard<std::mutex> lock(playingMutex);
-	playing = false;
 	messages.push(Message(Message::STOP));
-	std::lock_guard<std::mutex> songLock(songMutex);
 	newSong = true;
 }
 
@@ -208,11 +198,12 @@ void MIDIPlayer::onVolChange(int vol)
 
 void MIDIPlayer::processFiles(double sampleRate)
 {
+	bool playing = false;
 	bool initialized = false;
 	bool lastSamplePushed = true;
 	Track track;
 	DefaultInstrument instrument(track);
-	double sample;
+	double sample = 0.0;
 	while (true)
 	{
 		if (!messages.isEmpty())
@@ -226,15 +217,26 @@ void MIDIPlayer::processFiles(double sampleRate)
 			{
 				instrument.reset(message.getTrack());
 				initialized = true;
+				playing = true;
+			}
+			else if (message.isPause())
+			{
+				playing = false;
 			}
 			else if (message.isStop())
 			{
+				dataBuffer.clear();
 				instrument.reset(track);
 				initialized = false;
 				lastSamplePushed = true;
+				playing = false;
 			}
 		}
-		if (initialized && !instrument.halted())
+		if (!playing)
+		{
+			dataBuffer.tryPush(0);
+		}
+		else if (initialized && !instrument.halted())
 		{
 			if (lastSamplePushed)
 			{
@@ -252,12 +254,20 @@ void MIDIPlayer::handleNotify()
 	int bytesToWrite = (int)(bytesFree > bufferSize ? bufferSize : bytesFree);
 	int samplesToWrite = bytesToWrite >> 1;
 	bytesToWrite = 2 * samplesToWrite;
-	std::vector<char> buff;
 	buff.reserve(bytesToWrite);
-	int16_t *buffAsInt = (int16_t *)buff.data();
 	for (int i = 0; i < samplesToWrite; i++)
 	{
-		buffAsInt[i] = dataBuffer.pop();
+		int16_t sample = dataBuffer.pop();
+		int16_t sample2 = sample >> 8;
+		char *temp1 = reinterpret_cast<char *>(&sample);
+		char *temp2 = reinterpret_cast<char *>(&sample2);
+		buff.push_back(*temp1);
+		buff.push_back(*temp2);
+		qDebug() << sample;
 	}
-	device->write(buff.data(), bytesToWrite);
+	if (bytesToWrite > 0)
+	{
+		device->write(buff.data(), bytesToWrite);
+	}
+	buff.clear();
 }

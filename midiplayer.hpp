@@ -73,15 +73,16 @@ private slots:
 	void onVolChange(int volume);
 
 	/**
-	*
+	* Handles giving new samples to the QAudioOutput
 	*/
 	void handleNotify();
 
 private:
+
+	std::vector<char> buff;
 	const double VOL_MAX = 100.0;
 	std::size_t bufferSize;
 
-	std::mutex songMutex;
 	bool newSong;
 
 	MessageQueue messages;
@@ -116,8 +117,5 @@ private:
 	* The file processing function that processes the signal
 	*/
 	void processFiles(double sampleRate);
-
-	std::mutex playingMutex;
-	bool playing;
 };
 #endif

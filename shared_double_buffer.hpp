@@ -11,11 +11,13 @@ typedef std::queue<std::int16_t> DataQueue;
 class SharedDoubleBuffer {
 public:
 
-	SharedDoubleBuffer(std::size_t size = 100);
+	SharedDoubleBuffer(std::size_t size = 8192);
 
 	std::int16_t pop();
 
 	bool tryPush(std::int16_t data);
+
+	void clear();
 
 private:
 	std::size_t maxSize;

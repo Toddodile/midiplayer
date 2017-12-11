@@ -38,3 +38,12 @@ bool SharedDoubleBuffer::tryPush(std::int16_t data)
 	}
 	return false;
 }
+
+void SharedDoubleBuffer::clear()
+{
+	std::lock_guard<std::mutex> lock(queueMutex);
+	DataQueue empty;
+	DataQueue empty1;
+	std::swap(input, empty);
+	std::swap(output, empty1);
+}
