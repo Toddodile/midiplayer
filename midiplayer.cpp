@@ -11,11 +11,13 @@
 #include <QAudioDeviceInfo>
 
 #include <thread>
+#include <vector>
+#include "midi.hpp"
+#include "instrument.hpp"
 
 MIDIPlayer::MIDIPlayer(QWidget * parent) : QWidget(parent)
 {
 	playing = false;
-	volume = 50 * VOL_MAX;
 	newSong = true;
 
 	auto layout = new QVBoxLayout;
@@ -29,7 +31,6 @@ MIDIPlayer::MIDIPlayer(QWidget * parent) : QWidget(parent)
 	connect(pauseBtn, SIGNAL(clicked()), this, SLOT(onPause()));
 	connect(stopBtn, SIGNAL(clicked()), this, SLOT(onStop()));
 	connect(muteBtn, SIGNAL(clicked()), this, SLOT(onMute()));
-	processor = std::thread(&MIDIPlayer::processFiles, this);
 
 	QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
 	
@@ -56,10 +57,23 @@ MIDIPlayer::MIDIPlayer(QWidget * parent) : QWidget(parent)
 	else {
 		audio = new QAudioOutput(format);
 	}
+
+	connect(audio, SIGNAL(notify()), this, SLOT(handleNotify()));
+
+	bufferSize = audio->bufferSize();
+	bufferSize = bufferSize > 0 ? bufferSize : 1024;
+
+	audio->setNotifyInterval(25);
+	
+	device = audio->start();
+
+	processor = std::thread(&MIDIPlayer::processFiles, this, sampleRate);
+	handleNotify();
 }
 
 MIDIPlayer::~MIDIPlayer()
 {
+	messages.push(Message(Message::EXIT));
 	processor.join();
 }
 
@@ -100,9 +114,11 @@ QGroupBox* MIDIPlayer::makePlayParams()
 
 	pauseBtn = new QPushButton("Pause");
 	pauseBtn->setObjectName("pause");
+	pauseBtn->setEnabled(false);
 
 	stopBtn = new QPushButton("Stop");
 	stopBtn->setObjectName("stop");
+	stopBtn->setEnabled(false);
 
 	volumeSld = new QSlider(Qt::Horizontal);
 	volumeSld->setObjectName("volume");
@@ -138,9 +154,22 @@ void MIDIPlayer::onPlay()
 	playing = true;
 	pauseBtn->setEnabled(true);
 	stopBtn->setEnabled(true);
-	messages.push(Message::PLAY);
+	std::lock_guard<std::mutex> songLock(songMutex);
+	std::lock_guard<std::mutex> playLock(playingMutex);
+	if (newSong)
+	{
+		TrackListType tracks = readMIDIFromFile(midiPath->text().toStdString());
+		if (tracks.size() == 0)
+		{
+			QMessageBox error;
+			error.setObjectName("badinput");
+			error.critical(this, "Error", "Invlad MIDI file");
+			return;
+		}
+		messages.push(Message(tracks.front()));
+	}
+	playing = true;
 	qDebug() << "Hit play";
-	//TODO send play message
 }
 
 void MIDIPlayer::onPause()
@@ -149,7 +178,8 @@ void MIDIPlayer::onPause()
 	playBtn->setEnabled(true);
 	pauseBtn->setEnabled(false);
 	stopBtn->setEnabled(true);
-	qDebug() << "Hit pause";
+	std::lock_guard<std::mutex> lock(playingMutex);
+	playing = false;
 }
 
 void MIDIPlayer::onStop()
@@ -158,31 +188,76 @@ void MIDIPlayer::onStop()
 	pauseBtn->setEnabled(false);
 	stopBtn->setEnabled(false);
 	midiPath->setReadOnly(false);
-	qDebug() << "Hit stop";
-	//TODO send reset message
+	std::lock_guard<std::mutex> lock(playingMutex);
+	playing = false;
+	messages.push(Message(Message::STOP));
+	std::lock_guard<std::mutex> songLock(songMutex);
+	newSong = true;
 }
 
 void MIDIPlayer::onMute()
 {
-	std::lock_guard<std::mutex> lock(volMutex);
-	volume = volume == 0 ? volumeSld->sliderPosition() * VOL_MAX: 0;
-	qDebug() << "Hit mute";
+	volumeSld->setSliderPosition(0);
+	audio->setVolume(0);
 }
 
-void MIDIPlayer::onVolChange(int volume)
+void MIDIPlayer::onVolChange(int vol)
 {
-	qDebug() << volume;
-	//TODO implement
+	audio->setVolume(vol / VOL_MAX);
 }
 
-void MIDIPlayer::processFiles()
+void MIDIPlayer::processFiles(double sampleRate)
 {
-	//todo
+	bool initialized = false;
+	bool lastSamplePushed = true;
+	Track track;
+	DefaultInstrument instrument(track);
+	double sample;
+	while (true)
+	{
+		if (!messages.isEmpty())
+		{
+			Message message = messages.pop();
+			if (message.isExit())
+			{
+				return;
+			}
+			if (message.isPlay())
+			{
+				instrument.reset(message.getTrack());
+				initialized = true;
+			}
+			else if (message.isStop())
+			{
+				instrument.reset(track);
+				initialized = false;
+				lastSamplePushed = true;
+			}
+		}
+		if (initialized && !instrument.halted())
+		{
+			if (lastSamplePushed)
+			{
+				sample = instrument.sample(1.0 / sampleRate);
+			}
+			lastSamplePushed = dataBuffer.tryPush((int16_t)sample);
+		}
+	}
 	return;
 }
 
 void MIDIPlayer::handleNotify()
 {
-	//TODO implement;
-	return;
+	int bytesFree = audio->bytesFree();
+	int bytesToWrite = (int)(bytesFree > bufferSize ? bufferSize : bytesFree);
+	int samplesToWrite = bytesToWrite >> 1;
+	bytesToWrite = 2 * samplesToWrite;
+	std::vector<char> buff;
+	buff.reserve(bytesToWrite);
+	int16_t *buffAsInt = (int16_t *)buff.data();
+	for (int i = 0; i < samplesToWrite; i++)
+	{
+		buffAsInt[i] = dataBuffer.pop();
+	}
+	device->write(buff.data(), bytesToWrite);
 }

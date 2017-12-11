@@ -15,7 +15,7 @@ public:
 
 	std::int16_t pop();
 
-	void push(std::int16_t data);
+	bool tryPush(std::int16_t data);
 
 private:
 	std::size_t maxSize;

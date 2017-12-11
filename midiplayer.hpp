@@ -79,6 +79,7 @@ private slots:
 
 private:
 	const double VOL_MAX = 100.0;
+	std::size_t bufferSize;
 
 	std::mutex songMutex;
 	bool newSong;
@@ -99,6 +100,7 @@ private:
 	QSlider * volumeSld;
 
 	QAudioOutput *audio;
+	QIODevice *device;
 
 	/**
 	* Creates a QGroupBox containing the MIDI parameters
@@ -113,12 +115,9 @@ private:
 	/**
 	* The file processing function that processes the signal
 	*/
-	void processFiles();
+	void processFiles(double sampleRate);
 
 	std::mutex playingMutex;
 	bool playing;
-
-	std::mutex volMutex;
-	double volume;
 };
 #endif

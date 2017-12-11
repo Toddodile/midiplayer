@@ -16,7 +16,7 @@ std::int16_t SharedDoubleBuffer::pop()
 		return data;
 	}
 	std::lock_guard<std::mutex> lock(queueMutex);
-	if (output.size() == 0)
+	if (input.size() == 0)
 	{
 		return 0;
 	}
@@ -28,11 +28,13 @@ std::int16_t SharedDoubleBuffer::pop()
 	return data;
 }
 
-void SharedDoubleBuffer::push(std::int16_t data)
+bool SharedDoubleBuffer::tryPush(std::int16_t data)
 {
 	std::lock_guard<std::mutex> lock(queueMutex);
 	if (input.size() < maxSize)
 	{
-		input.push(data);
+		input.emplace(data);
+		return true;
 	}
+	return false;
 }

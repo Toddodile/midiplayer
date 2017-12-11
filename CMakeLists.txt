@@ -8,7 +8,8 @@ set(SOURCE_FILES
         midiplayer.hpp midiplayer.cpp
 	track.hpp track.cpp
 	event.hpp event.cpp
-	midi.hpp midi.cpp)
+	midi.hpp midi.cpp
+	instrument.hpp instrument.cpp)
 
 # try to prevent accidental in-source builds, these cause lots of problems
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
