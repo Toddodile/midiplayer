@@ -20,6 +20,8 @@ Q_OBJECT
 
 public:
 
+	typedef enum PLAY_STATE { PLAYING, PAUSED, STOPPED } State;
+
 	/**
 	* Creates a new MIDIPlayer
 	*/
@@ -39,6 +41,8 @@ public:
 	* Cannot be assigned
 	*/
 	MIDIPlayer & operator=(const MIDIPlayer &) = delete;
+
+	State getState();
 
 private slots:
 
@@ -78,6 +82,7 @@ private slots:
 	void handleNotify();
 
 private:
+	State playState;
 
 	std::vector<char> buff;
 	const double VOL_MAX = 100.0;

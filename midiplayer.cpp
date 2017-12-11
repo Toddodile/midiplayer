@@ -17,6 +17,7 @@
 
 MIDIPlayer::MIDIPlayer(QWidget * parent) : QWidget(parent)
 {
+	playState = STOPPED;
 	newSong = true;
 
 	auto layout = new QVBoxLayout;
@@ -164,7 +165,13 @@ void MIDIPlayer::onPlay()
 			return;
 		}
 		messages.push(Message(tracks.front()));
+		newSong = false;
 	}
+	else
+	{
+		messages.push(Message(Message::PLAY));
+	}
+	playState = PLAYING;
 }
 
 void MIDIPlayer::onPause()
@@ -173,6 +180,7 @@ void MIDIPlayer::onPause()
 	pauseBtn->setEnabled(false);
 	stopBtn->setEnabled(true);
 	messages.push(Message(Message::PAUSE));
+	playState = PAUSED;
 }
 
 void MIDIPlayer::onStop()
@@ -183,6 +191,7 @@ void MIDIPlayer::onStop()
 	midiPath->setReadOnly(false);
 	messages.push(Message(Message::STOP));
 	newSong = true;
+	playState = STOPPED;
 }
 
 void MIDIPlayer::onMute()
@@ -215,7 +224,10 @@ void MIDIPlayer::processFiles(double sampleRate)
 			}
 			if (message.isPlay())
 			{
-				instrument.reset(message.getTrack());
+				if (!initialized)
+				{
+					instrument.reset(message.getTrack());
+				}
 				initialized = true;
 				playing = true;
 			}
@@ -257,17 +269,22 @@ void MIDIPlayer::handleNotify()
 	buff.reserve(bytesToWrite);
 	for (int i = 0; i < samplesToWrite; i++)
 	{
-		int16_t sample = dataBuffer.pop();
+		
+		int16_t sample = playState == PLAYING ? dataBuffer.pop() : 0;
 		int16_t sample2 = sample >> 8;
 		char *temp1 = reinterpret_cast<char *>(&sample);
 		char *temp2 = reinterpret_cast<char *>(&sample2);
 		buff.push_back(*temp1);
 		buff.push_back(*temp2);
-		qDebug() << sample;
 	}
 	if (bytesToWrite > 0)
 	{
 		device->write(buff.data(), bytesToWrite);
 	}
 	buff.clear();
+}
+
+MIDIPlayer::State MIDIPlayer::getState()
+{
+	return playState;
 }

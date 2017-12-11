@@ -47,3 +47,14 @@ void SharedDoubleBuffer::clear()
 	std::swap(input, empty);
 	std::swap(output, empty1);
 }
+
+std::size_t SharedDoubleBuffer::getMaxSize()
+{
+	return maxSize;
+}
+
+bool SharedDoubleBuffer::isEmpty()
+{
+	std::lock_guard<std::mutex> lock(queueMutex);
+	return input.size() == 0 && output.size() == 0;
+}

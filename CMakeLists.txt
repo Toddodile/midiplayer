@@ -45,6 +45,13 @@ endif()
 add_executable(noise_generator noise_generator.cpp)
 target_link_libraries(noise_generator Qt5::Widgets Qt5::Multimedia)
 
+# Added
+set(TEST_FILE_DIR ${CMAKE_SOURCE_DIR}/tests)
+
+configure_file(${CMAKE_SOURCE_DIR}/test_config.hpp.in
+  ${CMAKE_BINARY_DIR}/test_config.hpp)
+# end Added
+
 # setup testing
 enable_testing()
 add_test(test_midiplayer test_midiplayer)
